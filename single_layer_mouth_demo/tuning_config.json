@@ -1,0 +1,11 @@
+{
+  "roiX": 137,
+  "roiY": 131,
+  "roiWidth": 26,
+  "roiHeight": 14,
+  "contourHeightScale": 1.5,
+  "contourWidthScale": 0.6,
+  "segmentCount": 20,
+  "splitStrength": 0.02,
+  "bulgeStrength": 0.03
+}

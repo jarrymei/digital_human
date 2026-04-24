@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- 页面标题，会显示在浏览器标签页上 -->
+    <title>数字人 Demo</title>
+    <style>
+        :root {
+            --bg: #eef3f7;
+            --panel: rgba(255, 255, 255, 0.92);
+            --panel-border: rgba(18, 40, 64, 0.08);
+            --text: #122840;
+            --muted: #61758a;
+            --accent: #1f6fb2;
+            --shadow: 0 18px 40px rgba(25, 52, 77, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(31, 111, 178, 0.12), transparent 28%),
+                radial-gradient(circle at bottom right, rgba(13, 148, 136, 0.1), transparent 24%),
+                linear-gradient(180deg, #f5f9fc 0%, #e9f0f5 100%);
+        }
+
+        .page {
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .layout {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(340px, 420px) minmax(420px, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(8px);
+        }
+
+        .controls {
+            padding: 18px;
+            position: sticky;
+            top: 24px;
+        }
+
+        .title {
+            margin: 0 0 6px;
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .subtitle {
+            margin: 0 0 14px;
+            color: var(--muted);
+            line-height: 1.5;
+            font-size: 13px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        #text {
+            width: 100%;
+            grid-column: 1 / -1;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(18, 40, 64, 0.12);
+            background: rgba(245, 249, 252, 0.9);
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px 12px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1f6fb2 0%, #164f86 100%);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 18px rgba(31, 111, 178, 0.18);
+        }
+
+        #camera-toggle {
+            background: linear-gradient(135deg, #137c6b 0%, #0d5f52 100%);
+            box-shadow: 0 10px 18px rgba(19, 124, 107, 0.18);
+        }
+
+        .status {
+            margin: 0 0 12px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(31, 111, 178, 0.08);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        #tuning-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        #tuning-panel label {
+            display: grid;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(245, 249, 252, 0.95);
+            border: 1px solid rgba(18, 40, 64, 0.08);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        #tuning-panel input[type="range"] {
+            width: 100%;
+        }
+
+        #debug-panel {
+            margin: 0;
+            padding: 10px 12px;
+            min-height: 130px;
+            max-height: 200px;
+            border-radius: 16px;
+            background: #122840;
+            color: #d9e7f5;
+            font-size: 11px;
+            line-height: 1.45;
+            overflow: auto;
+            white-space: pre-wrap;
+        }
+
+        .stage {
+            padding: 24px;
+            min-height: 760px;
+            display: grid;
+            place-items: center;
+            background:
+                radial-gradient(circle at top, rgba(31, 111, 178, 0.12), transparent 30%),
+                linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 246, 250, 0.94));
+        }
+
+        .avatar-wrap {
+            width: min(100%, 720px);
+            display: grid;
+            gap: 16px;
+            justify-items: center;
+        }
+
+        .stage-title {
+            margin: 0;
+            font-size: 16px;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        #canvas {
+            width: min(100%, 640px);
+            height: auto;
+            aspect-ratio: 1 / 1;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 22px 48px rgba(21, 44, 68, 0.16);
+        }
+
+        @media (max-width: 960px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                position: static;
+            }
+
+            .stage {
+                min-height: auto;
+            }
+
+            #tuning-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="layout">
+        <aside class="panel controls">
+            <h1 class="title">嘴型驱动调参台</h1>
+            <p class="subtitle">左侧调整轮廓、条带和形变参数，右侧实时观察数字人口型效果。</p>
+
+            <!-- 用户输入希望数字人朗读的文本 -->
+            <input id="text" placeholder="输入内容"/>
+
+            <div class="row">
+                <!-- 点击按钮后会调用 main.js 中的 speak() -->
+                <button onclick="speak()">说话</button>
+                <button id="camera-toggle" type="button">开启摄像头驱动</button>
+            </div>
+
+            <div id="driver-status" class="status">当前模式：音频驱动</div>
+
+            <div id="tuning-panel">
+                <label>
+                    ROI X
+                    <input id="tune-roi-x" type="range" min="60" max="220" step="1" value="125">
+                </label>
+                <label>
+                    ROI Y
+                    <input id="tune-roi-y" type="range" min="60" max="220" step="1" value="125">
+                </label>
+                <label>
+                    ROI 宽度
+                    <input id="tune-roi-width" type="range" min="20" max="140" step="1" value="48">
+                </label>
+                <label>
+                    ROI 高度
+                    <input id="tune-roi-height" type="range" min="10" max="100" step="1" value="21">
+                </label>
+                <label>
+                    轮廓高度
+                    <input id="tune-contour-height" type="range" min="1.5" max="5.0" step="0.1" value="3.2">
+                </label>
+                <label>
+                    轮廓宽度
+                    <input id="tune-contour-width" type="range" min="0.6" max="1.8" step="0.05" value="1.0">
+                </label>
+                <label>
+                    条带数量
+                    <input id="tune-segment-count" type="range" min="4" max="20" step="1" value="10">
+                </label>
+                <label>
+                    上下错位强度
+                    <input id="tune-split-strength" type="range" min="0.00" max="0.60" step="0.01" value="0.22">
+                </label>
+                <label>
+                    中部鼓起强度
+                    <input id="tune-bulge-strength" type="range" min="0.00" max="0.20" step="0.01" value="0.06">
+                </label>
+            </div>
+
+            <pre id="debug-panel">等待调试数据...</pre>
+        </aside>
+
+        <section class="panel stage">
+            <div class="avatar-wrap">
+                <p class="stage-title">数字人预览</p>
+
+                <!-- 数字人的显示区域。
+                     当前实现不是视频，而是一个 canvas。
+                     JS 会把头像图片画进来，再叠加一个动态嘴巴。 -->
+                <canvas id="canvas" width="300" height="300"></canvas>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- MediaPipe 读取摄像头时需要一个 video 元素作为输入源。
+     这里先隐藏，只把关键点分析结果用于驱动数字人嘴型。 -->
+<video
+    id="camera-input"
+    width="320"
+    height="240"
+    autoplay
+    playsinline
+    style="display:none;"
+></video>
+
+<!-- 这两个 mediapipe 库当前页面里还没有真正使用。
+     它们通常用于后续更复杂的人脸追踪、关键点识别等功能。 -->
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+
+<!-- 项目的核心前端逻辑：
+     1. 调用后端生成语音
+     2. 播放音频
+     3. 根据音频能量驱动嘴巴开合 -->
+<script src="static/main.js"></script>
+</body>
+</html>
