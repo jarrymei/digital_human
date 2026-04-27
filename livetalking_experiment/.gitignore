@@ -1,0 +1,9 @@
+# LiveTalking upstream source is kept as an external checkout for local experiments.
+upstream/
+
+# Large model/avatar assets should not be committed to this learning repo.
+*.pth
+*.pt
+*.onnx
+*.tar.gz
+
