@@ -1,0 +1,10 @@
+# FastAPI 提供后端接口和静态页面服务。
+fastapi>=0.115.0,<1.0.0
+
+# uvicorn 是运行 FastAPI 应用的 ASGI 服务器。
+# 启动示例：
+# uvicorn main:app --reload --host 127.0.0.1 --port 8000
+uvicorn>=0.30.0,<1.0.0
+
+# edge-tts 用于调用 Microsoft Edge 在线语音服务生成 mp3。
+edge-tts>=6.1.0,<8.0.0
