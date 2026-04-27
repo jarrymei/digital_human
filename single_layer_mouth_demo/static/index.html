@@ -4,6 +4,13 @@
     <!-- 页面标题，会显示在浏览器标签页上 -->
     <title>数字人 Demo</title>
     <style>
+        /* 这一页暂时没有引入 CSS 框架。
+           所有样式都写在 index.html 里，方便学习时直接看到：
+           HTML 结构如何对应页面布局，CSS 如何控制调参区和预览区。 */
+
+        /* :root 中放的是全局设计变量。
+           后面如果想换主题颜色，只需要先改这些变量，
+           不必到每个按钮、面板里逐个修改。 */
         :root {
             --bg: #eef3f7;
             --panel: rgba(255, 255, 255, 0.92);
@@ -14,10 +21,15 @@
             --shadow: 0 18px 40px rgba(25, 52, 77, 0.12);
         }
 
+        /* box-sizing: border-box 能让 width 包含 padding 和 border。
+           对调参面板这种很多输入框的页面来说，这样更容易控制布局宽度。 */
         * {
             box-sizing: border-box;
         }
 
+        /* body 是整个页面的背景和默认字体。
+           背景里用了很轻的径向渐变和线性渐变，只是为了区分页面层次，
+           不影响主要学习内容：数字人、摄像头对照、调参面板。 */
         body {
             margin: 0;
             font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -28,20 +40,29 @@
                 linear-gradient(180deg, #f5f9fc 0%, #e9f0f5 100%);
         }
 
+        /* .page 是最外层页面容器。
+           min-height: 100vh 让页面至少占满一屏；
+           padding 给内容和浏览器边缘留出距离。 */
         .page {
             min-height: 100vh;
             padding: 24px;
         }
 
+        /* .layout 是页面主网格：
+           - 左列：调参和控制
+           - 右列：数字人预览 + 摄像头对照
+           这里用 CSS Grid，而不是绝对定位，是为了后面适配不同屏幕更容易。 */
         .layout {
-            max-width: 1280px;
+            max-width: 1440px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: minmax(340px, 420px) minmax(420px, 1fr);
+            grid-template-columns: minmax(320px, 380px) minmax(720px, 1fr);
             gap: 24px;
             align-items: start;
         }
 
+        /* panel 是页面中“视觉上成块”的容器。
+           左侧控制台和右侧预览区共用这个样式，保持整体一致。 */
         .panel {
             background: var(--panel);
             border: 1px solid var(--panel-border);
@@ -50,6 +71,8 @@
             backdrop-filter: blur(8px);
         }
 
+        /* 左侧控制台在大屏幕下 sticky 固定。
+           这样右侧预览区较高时，用户滚动页面仍能看到调参滑块。 */
         .controls {
             padding: 18px;
             position: sticky;
@@ -77,6 +100,8 @@
             margin-bottom: 10px;
         }
 
+        /* 文本输入框用于输入要朗读的内容。
+           它占满左侧控制区的宽度，后续 speak() 会读取它的 value。 */
         #text {
             width: 100%;
             grid-column: 1 / -1;
@@ -88,6 +113,9 @@
             font-size: 14px;
         }
 
+        /* 两个按钮共用基础样式：
+           - “说话”：走 TTS + 音频驱动
+           - “开启摄像头驱动”：走 getUserMedia + FaceMesh */
         button {
             width: 100%;
             padding: 10px 12px;
@@ -101,11 +129,15 @@
             box-shadow: 0 10px 18px rgba(31, 111, 178, 0.18);
         }
 
+        /* 摄像头按钮使用绿色，和蓝色的“说话”按钮区分。
+           这不是功能必须，只是降低学习时误点的概率。 */
         #camera-toggle {
             background: linear-gradient(135deg, #137c6b 0%, #0d5f52 100%);
             box-shadow: 0 10px 18px rgba(19, 124, 107, 0.18);
         }
 
+        /* 状态条显示当前驱动模式或摄像头错误。
+           它对应 JS 里的 setDriverStatus()。 */
         .status {
             margin: 0 0 12px;
             padding: 8px 10px;
@@ -116,6 +148,9 @@
             font-weight: 600;
         }
 
+        /* 调参面板使用两列网格。
+           每个 label 里包含一个参数名和一个 range 滑块。
+           小屏幕下会在 media query 中改成一列。 */
         #tuning-panel {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -139,6 +174,8 @@
             width: 100%;
         }
 
+        /* 调试面板对应 JS 里的 updateDebugPanel()。
+           使用 pre 是为了保留换行，让每个内部状态独占一行。 */
         #debug-panel {
             margin: 0;
             padding: 10px 12px;
@@ -153,21 +190,37 @@
             white-space: pre-wrap;
         }
 
+        /* stage 是右侧预览区域的外层容器。
+           它不直接绘制内容，只负责给数字人和摄像头对照提供背景和内边距。 */
         .stage {
             padding: 24px;
-            min-height: 760px;
-            display: grid;
-            place-items: center;
+            min-height: 680px;
             background:
                 radial-gradient(circle at top, rgba(31, 111, 178, 0.12), transparent 30%),
                 linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 246, 250, 0.94));
         }
 
-        .avatar-wrap {
-            width: min(100%, 720px);
+        /* 右侧预览区分成两列：
+           - 左边显示数字人最终效果
+           - 右边显示真实摄像头画面和嘴部关键点
+           这样做的目的不是增加新功能，而是方便学习时对照：
+           “真实嘴巴怎么动” 与 “数字人嘴巴怎么响应”。 */
+        .preview-layout {
+            width: 100%;
             display: grid;
-            gap: 16px;
+            grid-template-columns: minmax(360px, 1fr) minmax(320px, 420px);
+            gap: 20px;
+            align-items: center;
+        }
+
+        /* 每一个预览面板内部都用同样的竖向结构：
+           标题在上，canvas 在下。
+           这样后续如果继续增加“嘴部裁剪预览”或“关键点数值图”，也可以复用这个结构。 */
+        .preview-pane {
+            display: grid;
+            gap: 12px;
             justify-items: center;
+            align-content: start;
         }
 
         .stage-title {
@@ -179,15 +232,43 @@
         }
 
         #canvas {
-            width: min(100%, 640px);
+            width: min(100%, 620px);
             height: auto;
             aspect-ratio: 1 / 1;
-            border-radius: 24px;
+            border-radius: 18px;
             background: rgba(255, 255, 255, 0.85);
             box-shadow: 0 22px 48px rgba(21, 44, 68, 0.16);
         }
 
-        @media (max-width: 960px) {
+        /* 摄像头对照画布保持 4:3，因为浏览器摄像头默认常见采集比例就是 320x240。
+           这里显示整张脸，而不是只裁剪嘴巴：
+           学习 FaceMesh 时，能同时观察脸部姿态、是否入镜、嘴部关键点是否稳定。 */
+        .camera-preview-wrap {
+            width: 100%;
+            display: grid;
+            gap: 12px;
+            justify-items: center;
+        }
+
+        .camera-preview-title {
+            margin: 0;
+            color: var(--muted);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        #camera-preview {
+            width: min(100%, 420px);
+            height: auto;
+            aspect-ratio: 4 / 3;
+            border-radius: 18px;
+            background: #122840;
+            box-shadow: 0 14px 28px rgba(21, 44, 68, 0.14);
+        }
+
+        /* 窄屏时先把左侧控制台和右侧预览区上下排列。
+           这能避免调参区挤压预览 canvas，导致嘴部变化看不清。 */
+        @media (max-width: 1180px) {
             .layout {
                 grid-template-columns: 1fr;
             }
@@ -199,6 +280,22 @@
             .stage {
                 min-height: auto;
             }
+        }
+
+        /* 手机或小窗口下，数字人预览和摄像头对照也改成上下排列。
+           桌面端优先横向对照，小屏端优先保证每个画布都有足够宽度。 */
+        @media (max-width: 760px) {
+            .page {
+                padding: 14px;
+            }
+
+            .stage {
+                padding: 16px;
+            }
+
+            .preview-layout {
+                grid-template-columns: 1fr;
+            }
 
             #tuning-panel {
                 grid-template-columns: 1fr;
@@ -208,6 +305,10 @@
 </head>
 <body>
 <div class="page">
+    <!-- 页面主结构：
+         aside.controls 是“操作区”：输入文本、按钮、调参、调试数据。
+         section.stage 是“观察区”：数字人结果和摄像头识别对照。
+         这个学习项目的重点就是同时看到“输入/参数”和“输出效果”。 -->
     <div class="layout">
         <aside class="panel controls">
             <h1 class="title">嘴型驱动调参台</h1>
@@ -217,14 +318,21 @@
             <input id="text" placeholder="输入内容"/>
 
             <div class="row">
-                <!-- 点击按钮后会调用 main.js 中的 speak() -->
+                <!-- 点击“说话”后会调用 main.js 中的 speak()：
+                     输入文本 -> 请求后端 /tts -> 播放 mp3 -> Web Audio 分析音频 -> 嘴型变化。 -->
                 <button onclick="speak()">说话</button>
+                <!-- 摄像头按钮不使用 inline onclick，而是在 main.js 末尾通过 addEventListener 绑定。
+                     这样摄像头逻辑都集中在 JS 文件里，便于阅读。 -->
                 <button id="camera-toggle" type="button">开启摄像头驱动</button>
             </div>
 
+            <!-- 当前驱动模式或错误提示。
+                 JS 里 setDriverStatus(text) 会更新这里。 -->
             <div id="driver-status" class="status">当前模式：音频驱动</div>
 
             <div id="tuning-panel">
+                <!-- ROI 表示嘴巴贴图绘制在头像上的矩形区域。
+                     如果头像素材变化，最先需要调的通常就是 ROI X / Y / 宽 / 高。 -->
                 <label>
                     ROI X
                     <input id="tune-roi-x" type="range" min="60" max="220" step="1" value="125">
@@ -241,6 +349,8 @@
                     ROI 高度
                     <input id="tune-roi-height" type="range" min="10" max="100" step="1" value="21">
                 </label>
+                <!-- 轮廓高度/宽度影响摄像头关键点模式下的嘴部裁剪范围。
+                     如果嘴型贴图被裁得太窄或太高，就调这两个参数。 -->
                 <label>
                     轮廓高度
                     <input id="tune-contour-height" type="range" min="1.5" max="5.0" step="0.1" value="3.2">
@@ -249,6 +359,8 @@
                     轮廓宽度
                     <input id="tune-contour-width" type="range" min="0.6" max="1.8" step="0.05" value="1.0">
                 </label>
+                <!-- 条带数量和形变强度控制“贴图局部变形”。
+                     条带越多，局部变化越细；强度越大，张嘴时上下唇分离越明显。 -->
                 <label>
                     条带数量
                     <input id="tune-segment-count" type="range" min="4" max="20" step="1" value="10">
@@ -263,17 +375,34 @@
                 </label>
             </div>
 
+            <!-- 调试面板展示内部状态：
+                 当前嘴型、驱动来源、音频特征、摄像头嘴部比例、调参值等。
+                 学习时建议一边说话/张嘴，一边观察这里的数值变化。 -->
             <pre id="debug-panel">等待调试数据...</pre>
         </aside>
 
         <section class="panel stage">
-            <div class="avatar-wrap">
-                <p class="stage-title">数字人预览</p>
+            <!-- 右侧预览区：
+                 左边是“处理后的结果”，右边是“输入来源和识别结果”。
+                 这对学习数字人链路很重要：
+                 摄像头画面 -> FaceMesh 嘴部关键点 -> 嘴型判断 -> 数字人嘴巴变化。 -->
+            <div class="preview-layout">
+                <div class="preview-pane">
+                    <p class="stage-title">数字人预览</p>
 
-                <!-- 数字人的显示区域。
-                     当前实现不是视频，而是一个 canvas。
-                     JS 会把头像图片画进来，再叠加一个动态嘴巴。 -->
-                <canvas id="canvas" width="300" height="300"></canvas>
+                    <!-- 数字人的显示区域。
+                         当前实现不是视频，而是一个 canvas。
+                         JS 会把头像图片画进来，再叠加一个动态嘴巴。 -->
+                    <canvas id="canvas" width="300" height="300"></canvas>
+                </div>
+
+                <div class="preview-pane camera-preview-wrap">
+                    <p class="camera-preview-title">摄像头对照</p>
+                    <!-- 这个 canvas 不参与识别，只负责“把识别过程画出来”。
+                         真正提供摄像头帧的是下面隐藏的 video#camera-input。
+                         JS 会每帧把 video 当前画面画到这里，再叠加嘴部轮廓和关键点。 -->
+                    <canvas id="camera-preview" width="320" height="240"></canvas>
+                </div>
             </div>
         </section>
     </div>
@@ -286,12 +415,13 @@
     width="320"
     height="240"
     autoplay
+    muted
     playsinline
-    style="display:none;"
+    style="position:fixed;left:-9999px;top:-9999px;width:320px;height:240px;opacity:0;pointer-events:none;"
 ></video>
 
-<!-- 这两个 mediapipe 库当前页面里还没有真正使用。
-     它们通常用于后续更复杂的人脸追踪、关键点识别等功能。 -->
+<!-- FaceMesh 用于从摄像头画面中提取人脸关键点。
+     camera_utils 当前保留给后续对比 MediaPipe Camera 封装时使用。 -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
 
