@@ -1,0 +1,8 @@
+inputs/*
+models/*
+outputs/*
+!inputs/.gitkeep
+!models/.gitkeep
+!outputs/.gitkeep
+outputs/_tmp/
+

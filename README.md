@@ -89,3 +89,19 @@ http://127.0.0.1:8000
 [livetalking_experiment/README.md](livetalking_experiment/README.md)
 
 这个目录已把现有 Canvas Demo 和 LiveTalking 实验分开：前者保留为学习基线，后者用于研究 Wav2Lip / MuseTalk 这类实时视频数字人路线。
+
+## Duix.Avatar Web 客户端
+
+如果你已经在云服务器上部署了开源项目 Duix.Avatar，可以看：
+
+[duix_vue_client/README.md](duix_vue_client/README.md)
+
+这个目录是一个独立的 Vue3 页面客户端：填写 `audio_url`、`video_url` 和任务 `code` 后提交到 `/easy/submit`，再轮询 `/easy/query`，最后在页面里播放生成视频。它用于学习“离线数字人视频合成服务如何被 Web 页面调用”。
+
+## Wav2Lip 核心离线 Demo
+
+如果觉得 LiveTalking 的实时工程代码太复杂，可以先看：
+
+[wav2lip_core_demo/README.md](wav2lip_core_demo/README.md)
+
+这个 Demo 不做 WebRTC 和 TTS，只保留 `输入视频/图片 + 音频 -> Wav2Lip -> 输出 mp4`，适合单独理解口型生成的核心流程。
